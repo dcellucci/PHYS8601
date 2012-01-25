@@ -1,0 +1,51 @@
+\documentclass[twocolumn,prb,amsmath,amssymb,amsfonts]{revtex4}
+\usepackage{graphicx} 
+
+\begin{document}
+
+\title{On the Use of Random Sampling to Estimate the Value of $\pi$}
+
+\author{Daniel Cellucci}
+\affiliation{Department of Physics and Astronomy, University of Georgia,
+Athens, Georgia 30602\\}
+
+\date{\today}
+
+\begin{abstract}
+
+\end{abstract}
+
+\maketitle
+\section{Introduction and history of the problem}
+The exact value for the relationship between the diameter of a given circle and its circumference in flat space was an open problem to the ancient mathematicians. In particular, a problem called 'Squaring the Circle' was of special interest to geometers. They sought to answer whether, given a circle with a radius $r$, it would be possible to construct a square with an equal area using a finite number of steps and only a compass and straightedge. In 1882, the Lindermann-Weierstrauss theorem proved without any doubt that this venture was impossible by showing that $\pi$ is a trancendental number, and is therefore only capable of being only estimated .
+ 
+An interesting fact: One needs only 39 digits of $\pi$ to make a circle the size of the observable universe accurate to the size of a hydrogen atom.
+
+\section{Basic Physics}
+This lab seeks to "square" the circle, but instead of a compass and a straightedge, the tools being used will be a computer and "random" chance. 
+
+The methodology for such an estimation is straightforward. First, the experimenter draws a circle at the bottom of a square bucket such that the center of the circle is coincident with the center of the bucket, and the circumference of the circle touches the sides of the bucket at four points. The experimenter then drops a series of balls into the bucket randomly. After dropping each ball, the experimenter then records whether the ball fell inside or outside the circumference of the circle (in the rare chance that a ball lands precisely on the circle, it is recorded as outside the circle). A running total of the number of balls to land inside circle is recorded, and the balls are removed each time to prevent balls from hitting one another. Once a satisfactorially large number of balls have been dropped, the experimenter then calculates the ratio $\gamma$, which is the number of balls that landed inside the circle over the total number of balls that were dropped.
+
+This ratio $\gamma$ is related to the relative areas of the square bottom of the bucket and the circle inscribed inside. If the side of the bucket is $a$ then the area of the bucket's square bottom is $a^2$ and the area of the circle is $\pi\frac{a^2}{4}$. The ratio of these two areas is therefore equal to
+\begin{equation}
+\frac{\pi}{4} = \gamma
+\end{equation}
+and thus, $4\gamma = \pi$
+
+\section{Description of the Simulation}
+Though it might be satisfying to perform such an experiment in exactly the way described above, the computer can perform calculations such as these many orders of magnitude faster than the average human. However, the computer cannot generate genuinely random strings of numbers, and so it must instead rely on pseudo-random algorithms that can generate sequences of digits that are somewhat periodic. These periodicities are oftentimes so incredibly long that, within a thousand iterations of a single program they will not begin to repeat and are thus, for all intents and purposes, random
+
+The first and most important part of this simulation, therefore, was the acquisition of a RNG that was of this caliber. 
+\begin{figure*}
+\includegraphics*[width=6.9 in]{optickslab1fig1.pdf}
+\caption{}
+\end{figure*}
+
+
+\section{Measurements and Discussion}
+
+
+\section{Summary and Conclusion}
+
+
+\end{document}
