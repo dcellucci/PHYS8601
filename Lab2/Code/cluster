@@ -1,0 +1,6 @@
+#include "stdio.h"
+#include "r1279.cc"
+//Dr. Landau's 8601 class, homework problem 1
+//Program by Daniel Cellucci, 2012
+
+main(){
