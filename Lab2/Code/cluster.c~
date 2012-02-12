@@ -3,7 +3,6 @@
 #include "stdbool.h"
 //Dr. Landau's 8601 class, homework problem 1
 //Program by Daniel Cellucci, 2012
-
   //initialization of variables. First the stage, then the temp
   //and bookkeeping values.
   int stagesize = 16, stage[stagesize][stagesize], groupkey[(int)(stagesize*stagesize/2)];
