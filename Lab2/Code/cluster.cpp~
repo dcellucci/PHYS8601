@@ -1,94 +1,110 @@
-#include "stdio.h"
-#include "stdlib.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <stdio.h>
 #include "r1279.cc"
-#include "stdbool.h"
-//Dr. Landau's 8601 class, homework problem 1
-//Program by Daniel Cellucci, 2012
+#include "mt19937-64.c"
 
-//initialization of variables. First the stage, then the temp
-//and bookkeeping values.
-#define stagesize 10
-static int stage[stagesize][stagesize];
-static int groupkey[stagesize];
+using namespace std;
+const int STAGESIZE = 100;
 
-int find_parent(int child);
-bool is_infinite();
-void run_a_job();
+
+int stage[STAGESIZE][STAGESIZE];
+int groupkey[STAGESIZE*STAGESIZE/2];
+int border[STAGESIZE*STAGESIZE/2][4];
+
+int seed = 6750233;
+int numclusters = 0;
 
 int find_parent(int child){
   if(groupkey[child] > 0)
     return child;
   else if(groupkey[child] < 0)
-    find_parent(-1*(int)groupkey[child]);
+    find_parent(-groupkey[child]);
   else
     return 0;
 }
 
 bool is_infinite(){
-  unsigned int border[4][stagesize];
-  int flag = 0;
   bool inf = false;
-  for(int j = 0; j < 4; j++){
-    for(int i = 0; i < stagesize; i++){
-      if(j == 0)
-        border[j][i] = find_parent(stage[i][0]);
-      if(j == 1)
-        border[j][i] = find_parent(stage[stagesize-1][i]);
-      if(j == 2)
-        border[j][i] = find_parent(stage[i][stagesize-1]);
+  //*
+  for(int i = 0; i < STAGESIZE*STAGESIZE/2; i++)
+    for(int j = 0; j < 4; j++)
+      border[i][j] = 0;
+  for(int i = 0; i < STAGESIZE; i++){
+    border[find_parent(stage[i][0])][0] = 1;
+    border[find_parent(stage[STAGESIZE][i])][1] = 1;
+    border[find_parent(stage[i][STAGESIZE])][2] = 1;
+    border[find_parent(stage[0][i])][3] = 1;
+  }
+
+  for(int i = 1; i < STAGESIZE*STAGESIZE/2; i++){
+    if(border[i][0]==1 && border[i][1]==1 && border[i][2]==1 && border[i][3]==1){
+      inf = true; 
+      //cout << "INFINITE\n------------\n";
+    }
+  }/*
+  for(int j = 0; j < STAGESIZE; j++){
+    for(int k= 0; k < STAGESIZE; k++){
+      if(stage[j][k] != 0)
+        printf("%2d  ",stage[j][k]);
       else
-        border[j][i] = find_parent(stage[0][i]);
+        cout<<"**  ";
     }
+    cout <<"\n";
   }
-  for(int k = 0; k < stagesize; k++){
-    if(border[0][k] != 0){
-      flag = 0;
-      for(int j = 1; j < 4; j++){
-        int i = 0;
-        bool not_found = true;
-        while(not_found && i < stagesize){
-          if(border[j][i] == border[0][k]){
-            not_found = false;
-            flag++;
-          }
-          else
-            i++;
-        }
+  cout<<"\n\n";
+  for(int i = 0; i < STAGESIZE*STAGESIZE/2; i++){ 
+    if(border[i][0]==1 || border[i][1]==1 || border[i][2]==1 || border[i][3]==1){ 
+      cout << i << "  ";
+      for(int j = 0; j < 4; j++){
+        printf("%2d  ",border[i][j]);
       }
-      if(flag == 3)
-        inf = true;
+    cout <<"\n";
     }
   }
+  cout<<"\n\n";
+  //*/
+  /*
+  while(!inf && k < STAGESIZE*STAGESIZE/2){
+    for(int j = 0; j < 4; j++)
+      border[k][j] = 0;
+    if(groupkey[k] > 0){
+      for(int i = 0; i < STAGESIZE; i++){
+        if(find_parent(stage[i][0])==groupkey[k])
+          border[k][0] = 1;
+        if(find_parent(stage[STAGESIZE-1][i])==groupkey[k])
+          border[k][1] = 1;
+        if(find_parent(stage[i][STAGESIZE-1])==groupkey[k])
+          border[k][2] = 1;
+        if(find_parent(stage[0][i])==groupkey[k])
+          border[k][3] = 1;
+      }
+    }
+    if(border[k][0]==1&&border[k][1]==1&&border[k][2]==1&&border[k][3]==1)
+      inf = true;
+    k++;
+  }//*/
   return inf;
 }
 
-void run_a_job(){
-  int xrand, yrand, temp, groupnum, assign, bckleft, bcktop;
-  float ratio = 0.59;
+void run_a_job(double ratio){
+  int xrand, yrand,groupnum, bckleft, bcktop;
   //note groupnum is 1. 
   groupnum = 1;
-  assign = 0;
   //emptying the stage
-  for(int i = 0; i < stagesize; i++){
-    for(int j = 0; j < stagesize; j++){
-      stage[i][j]=0;     
+  for(int i = 0; i < STAGESIZE; i++){
+    for(int j = 0; j < STAGESIZE; j++){
+      if(genrand64_real2()<ratio)
+        stage[i][j] = 1;
+      else        
+        stage[i][j] = 0;     
     }
   }
-  //populating the board with items note that I attempt to fill
-  //half the board with non-zero values, regardless of accidental
-  //degeneracies.
-  for(int i = 0; i < (int)(stagesize*stagesize*ratio); i++){
-    groupkey[i] = 0;
-    xrand = (int)(ranf()*stagesize);
-    yrand = (int)(ranf()*stagesize);
-    if(stage[xrand][yrand]==1)
-      i--;
-    else
-      stage[xrand][yrand]=1;
-  }
+
   //Now to check for clusters
-  for(int i = 0; i < stagesize; i++){
-    for(int j = 0; j < stagesize; j++){
+  for(int i = 0; i < STAGESIZE; i++){
+    for(int j = 0; j < STAGESIZE; j++){
       //only runs if there is something at (i,j)
       if(stage[i][j] != 0){
         //initial setup of temp variables,
@@ -123,6 +139,47 @@ void run_a_job(){
         else if(bckleft < bcktop){
           //we want to assign the lower of the two
           stage[i][j] = bckleft;
+          if(bckleft < find_parent(bcktop))
+            groupkey[find_parent(bcktop)] = -bckleft;
+        }
+        else if(bcktop < bckleft){
+          stage[i][j] = bcktop;
+          if(bcktop < find_parent(bckleft))
+            groupkey[find_parent(bckleft)] = -bcktop;
+        }
+      }
+    }
+  }
+}
+
+
+int main(){
+  unsigned long long seed2 = 31230293842;
+  init_genrand64(seed2);
+  ofstream myfile;
+  stringstream stst;
+  stst << STAGESIZE;
+  string s = stst.str().append(".aout");
+  myfile.open(s.c_str());
+
+  //double rat = 0.59;
+  for(double rat = 0.45; rat < 0.85; rat+=0.01){
+    int count = 0;
+    for(int i = 0; i < 1000; i++){
+      run_a_job(rat);
+      if(is_infinite()){
+          count++;
+      }
+  }
+  //cout<<rat <<" "<< 1.0*count/1000.0 << "\n";
+  myfile<<rat <<" "<< 1.0*count/1000.0 << "\n";
+  }
+  myfile.close();
+  return 0;
+}
+
+
+          /*
           bool looking = true;
           int tempdex = bcktop;
           //we also want to relabel the groupkey so that the larger
@@ -147,10 +204,8 @@ void run_a_job(){
             //tree in order to find the source
             else
               tempdex = -1*(int)groupkey[tempdex];
+            
           }
-        }
-        else if(bcktop < bckleft){
-          stage[i][j] = bcktop;
           bool looking = true;
           int tempdex = bckleft;
           while(looking){
@@ -164,57 +219,6 @@ void run_a_job(){
             else
               tempdex = -1*(int)groupkey[tempdex];
           }
-        }
-      }
-    }
-  }
-}
-
-void main(){
-  
-  //Programming chaismus. I could have reordered it, but it's
-  //the little things in life. 
-  FILE *out1;
-  int seed = 6750236;
-  out1  = fopen("out_put.out", "w");
-  rinitialize(seed);
-  float temp = 0;
-  int count = 0;
-  for(int i = 0; i < 100; i++){
-    for(int j = 0; j < 10; j++){
-      printf("i");
-      run_a_job();
-      if(is_infinite()){
-        count++;
-      }
-    }
-    temp+=count/10.0;
-  }
-  fprintf(out1,"%6.4f",temp/100.0);
-}
-
-
-
-
-
-
-
-
-
-
-/*
-      for(int i = 0; i < stagesize; i++){
-        for(int j = 0; j < stagesize; j++){
-          if(stage[i][j] > 0)
-            fprintf(out1, "%02d  ", stage[i][j]); 
-          else
-            fprintf(out1, "**  ", stage[i][j]);    
-        }
-        fprintf(out1, "\n");
-      }
-      for(int i = 0; i < (int)(stagesize*stagesize/2); i++)
-        if(groupkey[i] != 0)
-          fprintf(out1, "%i %i %i \n", i, groupkey[i], find_parent(i));
-          */
-
+          
+          //*/
 

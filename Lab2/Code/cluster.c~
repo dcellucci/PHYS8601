@@ -1,20 +1,70 @@
 #include "stdio.h"
+#include "stdlib.h"
 #include "r1279.cc"
 #include "stdbool.h"
 //Dr. Landau's 8601 class, homework problem 1
 //Program by Daniel Cellucci, 2012
-  //initialization of variables. First the stage, then the temp
-  //and bookkeeping values.
-  int stagesize = 16, stage[stagesize][stagesize], groupkey[(int)(stagesize*stagesize/2)];
-  int xrand, yrand, temp, seed, groupnum, assign, bckleft, bcktop;
-  
-main(){
-  //Programming chaismus. I could have reordered it, but it's
-  //the little things in life. 
-  FILE *out1;
-  seed = 6750236;
-	out1  = fopen("out_put.out", "w");
-  rinitialize(seed);
+
+//initialization of variables. First the stage, then the temp
+//and bookkeeping values.
+#define stagesize 10
+static int stage[stagesize][stagesize];
+static int groupkey[stagesize];
+
+int find_parent(int child);
+bool is_infinite();
+void run_a_job();
+
+int find_parent(int child){
+  if(groupkey[child] > 0)
+    return child;
+  else if(groupkey[child] < 0)
+    find_parent(-1*(int)groupkey[child]);
+  else
+    return 0;
+}
+
+bool is_infinite(){
+  unsigned int border[4][stagesize];
+  int flag = 0;
+  bool inf = false;
+  for(int j = 0; j < 4; j++){
+    for(int i = 0; i < stagesize; i++){
+      if(j == 0)
+        border[j][i] = find_parent(stage[i][0]);
+      if(j == 1)
+        border[j][i] = find_parent(stage[stagesize-1][i]);
+      if(j == 2)
+        border[j][i] = find_parent(stage[i][stagesize-1]);
+      else
+        border[j][i] = find_parent(stage[0][i]);
+    }
+  }
+  for(int k = 0; k < stagesize; k++){
+    if(border[0][k] != 0){
+      flag = 0;
+      for(int j = 1; j < 4; j++){
+        int i = 0;
+        bool not_found = true;
+        while(not_found && i < stagesize){
+          if(border[j][i] == border[0][k]){
+            not_found = false;
+            flag++;
+          }
+          else
+            i++;
+        }
+      }
+      if(flag == 3)
+        inf = true;
+    }
+  }
+  return inf;
+}
+
+void run_a_job(){
+  int xrand, yrand, temp, groupnum, assign, bckleft, bcktop;
+  float ratio = 0.59;
   //note groupnum is 1. 
   groupnum = 1;
   assign = 0;
@@ -27,7 +77,7 @@ main(){
   //populating the board with items note that I attempt to fill
   //half the board with non-zero values, regardless of accidental
   //degeneracies.
-  for(int i = 0; i < (int)(stagesize*stagesize/2); i++){
+  for(int i = 0; i < (int)(stagesize*stagesize*ratio); i++){
     groupkey[i] = 0;
     xrand = (int)(ranf()*stagesize);
     yrand = (int)(ranf()*stagesize);
@@ -84,9 +134,6 @@ main(){
               looking = false;
               if(bckleft < tempdex)
                 groupkey[tempdex] = -bckleft;
-              for(int i = 0; i < (int)(stagesize*stagesize/2); i++)
-                if(groupkey[i] != 0)
-                  printf("a %i %i \n", i, groupkey[i]);
               //we then assign the group key at this final value to be
               //the negative of the smaller, thus extending the call
               //chain by one link
@@ -99,7 +146,7 @@ main(){
             //negative, and therefore we need to travel up the ref
             //tree in order to find the source
             else
-              tempdex = -groupkey[tempdex];
+              tempdex = -1*(int)groupkey[tempdex];
           }
         }
         else if(bcktop < bckleft){
@@ -111,32 +158,63 @@ main(){
               looking = false;
               if(bcktop < tempdex)
                 groupkey[tempdex] = -bcktop;
-              for(int i = 0; i < (int)(stagesize*stagesize/2); i++)
-                if(groupkey[i] != 0)
-                  printf("%i %i \n", i, groupkey[i]);
             }
             else if (groupkey[tempdex] == 0)
               looking = false;
             else
-              tempdex = -groupkey[tempdex];
+              tempdex = -1*(int)groupkey[tempdex];
           }
         }
       }
     }
   }
-
-  for(int i = 0; i < stagesize; i++){
-    for(int j = 0; j < stagesize; j++){
-      if(stage[i][j] > 0)
-        fprintf(out1, "%02d  ", stage[i][j]); 
-      else
-        fprintf(out1, "**  ", stage[i][j]);    
-    }
-    fprintf(out1, "\n");
-  }
-  for(int i = 0; i < (int)(stagesize*stagesize/2); i++)
-    if(groupkey[i] != 0)
-      fprintf(out1, "%i %i \n", i, groupkey[i]);
 }
+
+void main(){
+  
+  //Programming chaismus. I could have reordered it, but it's
+  //the little things in life. 
+  FILE *out1;
+  int seed = 6750236;
+  out1  = fopen("out_put.out", "w");
+  rinitialize(seed);
+  float temp = 0;
+  int count = 0;
+  for(int i = 0; i < 100; i++){
+    for(int j = 0; j < 10; j++){
+      printf("i");
+      run_a_job();
+      if(is_infinite()){
+        count++;
+      }
+    }
+    temp+=count/10.0;
+  }
+  fprintf(out1,"%6.4f",temp/100.0);
+}
+
+
+
+
+
+
+
+
+
+
+/*
+      for(int i = 0; i < stagesize; i++){
+        for(int j = 0; j < stagesize; j++){
+          if(stage[i][j] > 0)
+            fprintf(out1, "%02d  ", stage[i][j]); 
+          else
+            fprintf(out1, "**  ", stage[i][j]);    
+        }
+        fprintf(out1, "\n");
+      }
+      for(int i = 0; i < (int)(stagesize*stagesize/2); i++)
+        if(groupkey[i] != 0)
+          fprintf(out1, "%i %i %i \n", i, groupkey[i], find_parent(i));
+          */
 
 

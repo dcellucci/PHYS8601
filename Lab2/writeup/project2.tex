@@ -1,0 +1,69 @@
+\documentclass[twocolumn,prb,amsmath,amssymb,amsfonts]{revtex4}
+\usepackage{graphicx} 
+
+\begin{document}
+
+\title{Applications of the Hoshen-Kopelman Algorithm into the Study of Percolation }
+
+\author{Daniel Cellucci}
+\affiliation{Department of Physics and Astronomy, University of Georgia,
+Athens, Georgia 30602\\}
+
+\date{\today}
+
+\begin{abstract}
+
+\end{abstract}
+
+\maketitle
+\section{Introduction and history of the problem}
+Percolation concerns the relationship between large numbers of objects that are randomly distributed in a space. It was originally suggested by Broadbent and Hammersely in 1957 as a methodology for the stochastic examination of fluid or gas through a porous medium. However, the model's relative simplicity allowed it to predict the behavior of a wide variety of phenomena, including the construction of non-defective integrated circuits and the spread of infections and forest fires.  
+
+Central to the study of percolation is the examination of clustering, groups of objects that are connected through their nearest neighbor. Of particular interest in a finite calculation are the infinite clusters, groups of objects whose members can be found on each side of the span and therefore span the entire field. Efficient identification and classification of clusters is therefore a high priority in the study of percolation in all regimes. The most straightforward computational algorithm for accomplishing this goal is the Hoshen-Kopelman method, which was introduced in 1976.
+
+\section{Basic Physics}
+Percolation is classified into two methods of object interactions- sites and bonds. Bonds are existing connections between two adjacent points that are placed with a random position and orientation on the field. Sites are points that are placed individually, and later connected with their neighbors to form clusters. In both cases, there is no diagonal interaction- sites can only be considered in the same cluster if they share a mutual side.
+
+Percolation is particularly interesting because it is one of the simplest systems to exhibit a phase transition. Specifically, by examining the probability of an infinite cluster $p_i$ given a certain concentration of sites, $p$, one can see a dramatic increase in the value of $p_i$ over a small interval of $p$. This interval only becomes smaller and the change more dramatic as one increases the size of the field being studied, until it converges on a single value of $p$. For a square lattice of site interactions, this critical threshold is $p=0.592746$ in the limit of a field of infinite size.
+
+The physical implications of this behavior make this model well worth its history of extensive study. For the problem the model was originally formulated to solve, percolation of a fluid or gas through a porous object, the presence of a phase transition suggests a behavior that is far from expected using natural intution. Namely, if the porous object being studied is large enough that is can be considered effectively infinite, there is a certain threshold concentration above which the fluid flows, and below which it doesn't. That is, instead of being a gentle increase related to the concentration, a large porous object would see an immediate change in percolation once a certain threshold concentration had been met. 
+
+There are a variety of mapping schemes to graph the various objects that might constitute a cluster including square, honeycomb, maple leaf, triangular, ice, diamond, Delaunay triangulation, and triangular hyperbolic lattices. All of these configurations correspond to different and more abstract problems, each of which require unique geometries in order to be studied. However, this paper will concern itself with only the 2-dimensional square lattice of site interactions. 
+
+\section{Description of the Simulation}
+The first step in the simulation was the construction of the field over which the phenomenon of clustering could be examined. Beginning with a concentration $p$, the program iterated over the entire lattice, calculating a random number at each point. If the random number was smaller than $p$, the site was filled. Otherwise, the algorithm 
+
+Central to the creation of a reliably random distribution of points was the use of an effective random number generator. To this end, the simulators employed the Mersenne Twister, a well-tested, fast, pseudorandom algorithm of period $2^{19937}-1$. The extremely long period allowed the use of a large number of test configurations without worry of repetition or breakdown of the unpredictability of the simuation (though it is interesting to note that the algorithm is not fit for cryptography, as a set of only 694 values are required to begin predicting subsequent values in the series).
+
+As previously stated, the most integral part of a percolation calculation is the identification and classification of clusters. This simulation implemented the Hoshen-Kopelman algorithm, which uses a combination of on-site labelling and an external key to keep track of clusters. The procedure for this methodology is straightforward. The algorithm scans the given field for a filled location. It then checks in the direction it has already travelled (i.e. if it were scanning in a similar manner to reading English, it might look to the site above and to the left). If it comes to a site with no filled neighbors, it will assign the lowest unique cluster value starting with 1, and increment a counter in the key indicating that cluster 1 now has one member. When it comes to a site that has a single filled neighbor, it will assign the value of the neighbor and increment that neighbor's key value by 1 as well. However, when it comes to a bridging site- one that contains two neighbors of differing cluster values- it not only assigns the value of the lower cluster index, but also redirects the larger cluster to the smaller and increments the lower indices key value by the size of this cluster. The algorithm performs this redirection by assigning a negative value to the key of the larger cluster equal to the negative of the smaller cluster's index. 
+
+Thus, each of the filled locations on the field is assigned a value denoting a specific cluster. Additionally, the algorithm produces a key which indicates the size of each unique cluster. A given cluster might consist of multiple different indices, and therefore the lowest index contains the full size of the cluster - all others either directly or indirectly reference this parent index via the use of a negative value.
+
+Once cluster size and distribution could be accurately obtained, the next step involved the study of the infinite cluster. The algorithm employed to study this structure examined the border of the simulation using four separate arrays containing the values of each side. At each point on the border, the algorithm ascertained the parent value of the cluster (i.e. the smallest member value). If all four sides shared a single parent value, then an infinite cluster existed in the space.
+
+\section{Measurements and Discussion}
+With this algorithm, both the infinite cluster probability and the distribution of cluster sizes could be ascertained for a given concentration $p$. The first step involved testing of the method by graphing infinite cluster probability over concentration 0. For each value of $p$, a given spanning probability was calculated by running one thousand configurations and counting the number of sets that produced spanning clusters. Ten of these ratios were then averaged together to get an approximation of the actual spanning probability for the given concentration.
+This process was performed for concentrations between 0.0 and 1.0 separated by increments of 0.1 and on lattices of size 10x10, 25x25, 50x50, and 100x100. 
+FIGUREONE illustrates these approximations- all error bars are smaller than the point size.  
+By inspection the three graphs in question display a behavior reminiscent of the logistic function, and therefore a nonlinear modelfit was placed on the data. This nonlinear model was defined as having three degrees of freedom
+\begin{equation}
+  p(x) = \frac{a}{1-e^{t*x-b}}
+\end{equation}
+Where $b$ is the most important variable in the examination of the value of $p_c$. Since the function is essentially symmetric around y = 0.5, the horizontal displacement of the function directly indicated $p_c$. For the four lattice used here, the value of $b$ was:
+
+Finally, 
+\section{Summary and Conclusion}
+
+
+\begin{figure*}
+\includegraphics*[width=4.0in]{out.png}
+\caption{Above is the graph of the first 1000 values of the first sample set. The green points are randomly generated coordinates, and the red is the boundary curve used to decide which points were inside the circle and which were outside.}
+\end{figure*}
+
+\begin{figure*}
+\includegraphics*[width=4.0in]{pi_out.png}
+\caption{The 100 values of the sample sets along with the average and the The value of $\pi$ and the mean value estimator are so close in value that they are not discernible in this graph's range}
+\end{figure*}
+
+
+\end{document}
