@@ -1,0 +1,92 @@
+\documentclass[twocolumn,prb,amsmath,amssymb,amsfonts]{revtex4}
+\usepackage{graphicx} 
+
+\begin{document}
+
+\title{Applications of the Hoshen-Kopelman Algorithm into the Study of Percolation }
+
+\author{Daniel Cellucci}
+\affiliation{Department of Physics and Astronomy, University of Georgia,
+Athens, Georgia 30602\\}
+
+\date{\today}
+
+\begin{abstract}
+
+\end{abstract}
+
+\maketitle
+\section{Introduction and history of the problem}
+Percolation concerns the relationship between large numbers of objects that are randomly distributed in a space. It was originally suggested by Broadbent and Hammersely in 1957 as a methodology for the stochastic examination of fluid or gas through a porous medium. However, the model's relative simplicity allowed it to predict the behavior of a wide variety of phenomena, including the construction of non-defective integrated circuits and the spread of infections and forest fires.  
+
+Central to the study of percolation is the examination of clustering, groups of objects that are connected through their nearest neighbor. Of particular interest in a finite calculation are the so-called infinite clusters, whose members can be found on every side of the finite, periodic field and can therefore be considered infinite. Efficient identification and classification of clusters is therefore a high priority in the study of percolation in all regimes, since it enables the identification of infinite clusters in a given set. The most straightforward computational algorithm for accomplishing this goal is the Hoshen-Kopelman method, which was introduced in 1976.
+
+\section{Basic Physics}
+Percolation is classified into two methods of object interactions- sites and bonds. Bonds are existing connections between two adjacent points that are placed with a random position and orientation on the field. Sites are points that are placed individually, and later connected with their neighbors to form clusters. In both cases, there is no diagonal interaction- sites can only be considered in the same cluster if they share a mutual side, and bond can only be placed along the axes of the grid.
+
+Percolation is particularly interesting because it is one of the simplest systems to exhibit a phase transition. Specifically, by examining the probability of an infinite cluster $p_i$ given a certain concentration of sites, $p$, one can see a dramatic increase in the value of $p_i$ over a small interval of $p$. This interval only becomes smaller and the change more dramatic as one increases the size of the field being studied, until it converges on a single value of $p$. For a square lattice of site interactions, this critical threshold is $p=0.592746$ in the limit of a field of infinite size.
+\begin{figure}
+\includegraphics*[width=1.5in]{grid1.pdf}
+\includegraphics*[width=1.5in]{grid.pdf}
+\caption{A sample set of clusters for a 10x10 lattice, and a color coded illustration of the Hoshen-Kopelman algorithm. Note that the colorations favor the lower index value.}
+\end{figure}
+The physical implications of this behavior make this model well worth its history of extensive study. For the problem the model was originally formulated to solve, percolation of a fluid or gas through a porous object, the presence of a phase transition suggests a behavior that is far from expected using natural intution. Namely, if the porous object being studied is large enough that is can be considered effectively infinite, there is a certain threshold concentration above which the fluid flows, and below which it doesn't. That is, instead of being a gentle increase related to the concentration, a large porous object would see an immediate change in percolation once a certain threshold concentration had been met. 
+
+There are a variety of mapping schemes to graph the various objects that might constitute a cluster including square, honeycomb, maple leaf, triangular, ice, diamond, Delaunay triangulation, and triangular hyperbolic lattices. All of these configurations correspond to different and more abstract problems, each of which require unique geometries in order to be studied. However, this paper will concern itself with only the 2-dimensional square lattice of site interactions. 
+\begin{figure}
+\includegraphics*[width=2.0in]{grid2.pdf}
+\includegraphics*[width=2.0in]{grid3.pdf}
+\caption{Two more sample sets of the 10x10 lattice, illustrating their random nature.}
+\end{figure}
+
+\section{Description of the Simulation}
+The first step in the simulation was the construction of the field over which the phenomenon of clustering could be examined. Beginning with a concentration $p$, the program iterated over the entire lattice, calculating a random number at each point. If the random number was smaller than $p$, the site was filled. Otherwise, the algorithm moved on to the next site, leaving an empty space. 
+
+Central to the creation of a reliably random distribution of points was the use of an effective random number generator. To this end, the simulators employed the Mersenne Twister, a well-tested, fast, pseudorandom algorithm of period $2^{19937}-1$. The extremely long period allowed the use of a large number of test configurations without worry of repetition or breakdown of the unpredictability of the simuation (though it is interesting to note that the algorithm is not fit for cryptography, as a set of only 694 values are required to begin predicting subsequent values in the series).
+
+As previously stated, the most integral part of a percolation calculation was the identification and classification of clusters. This simulation implemented the Hoshen-Kopelman algorithm, which uses a combination of on-site labelling and an external key to keep track of clusters. The procedure for this methodology is straightforward. The algorithm scans the given field for a filled location. It then checks in the direction it has already travelled (i.e. if it were scanning in a similar manner to reading English, it might look to the site above and to the left). If it comes to a site with no filled neighbors, it will assign the lowest unique cluster value starting with 1, and increment a counter in the key indicating that cluster 1 now has one member. When it comes to a site that has a single filled neighbor, it will assign the value of the neighbor and increment that neighbor's key value by 1 as well. However, when it comes to a bridging site- one that contains two neighbors of differing cluster values- it not only assigns the value of the lower cluster index, but also redirects the larger cluster to the smaller and increments the lower indices key value by the size of this cluster. The algorithm performs this redirection by assigning a negative value to the key of the larger cluster equal to the negative of the smaller cluster's index. 
+
+Thus, each of the filled locations on the field is assigned a value denoting a specific cluster. Additionally, the algorithm produces a key which indicates the size of each unique group, located at the position corresponding to smallest index of the group. A given cluster might consist of multiple different indices, and therefore the lowest index contains the full size of the cluster - all other cluster labels redirect to this parent index via the use of a negative value.
+
+Once cluster size and distribution could be accurately obtained, the next step involved the study of the infinite cluster. The algorithm employed to study this structure examined the border of the simulation using four separate arrays containing the values of each side. At each point on the border, the algorithm ascertained the parent value of the cluster (i.e. the smallest member value). If all four sides shared a single parent value, then an infinite cluster existed in the space.
+
+\section{Measurements and Discussion}
+Using the above methodology, both the infinite cluster probability and the distribution of cluster sizes could be ascertained for a given concentration $p$. The first step involved testing of the method by graphing infinite cluster probability over concentration . For each value of $p$, a given spanning probability was calculated by running one thousand configurations and counting the number of sets that produced spanning clusters. Ten of these ratios were then averaged together to get an approximation of the actual spanning probability for the given concentration.
+This process was performed for concentrations between 0.0 and 1.0 separated by increments of 0.1 and on lattices of size 10x10, 25x25, 50x50, and 100x100. 
+\begin{figure}{!H}
+\includegraphics*[width=3.0in]{spvscon10.pdf}
+\includegraphics*[width=3.0in]{spvscon100.pdf}
+\caption{Two illustrations of probability of infinite cluster versus concentration, for 10x10 and 100x100 lattices. The blue points also contain error bars, but they are smaller than the actual points. The orange line is a best fit using the model algorithm suggested in the text.}
+\end{figure}
+FIG. 3 illustrates these approximations for the 10x10 and 100x100 with errors. Note that the calculated standard error for each point is smaller than the size of the point. 
+By inspection, the three graphs in question display a behavior reminiscent of the logistic function, and therefore a nonlinear modelfit was placed on the data. This nonlinear model was defined as having three degrees of freedom
+\begin{equation}
+  p(x) = \frac{1}{1-e^{t(x-b)}}
+\end{equation}
+Where $b$ is the most important variable in the examination of the value of $p_c$. Since the function is essentially symmetric around y = 0.5, the horizontal displacement of the function directly indicated $p_c$. For the four lattices used here, the value of $b$ was ascertained to be: 0.6238 for a 10x10 lattice, 0.6102 for a 25x25 lattice, 0.6028 for a 50x50 lattice, and 0.5977 for a 100x100 lattice. This series of four values for larger and larger lattice size indicated a convergence in the value of b, and therefore the error of this calculation is estimated to be the difference between the value of the previous step and this step, or 0.0051. It should be noted that the error for this calculation is large enough to contain the expected value of 0.5927, but only barely. Thus, there remains a small source of error that has not been removed, either in the program itself, or in the methodology employed to calculate the offset.
+
+Having ascertained a relatively accurate value for the critical concentration, the next step involved the analysis of cluster size distrubution at this concentration in the limit of an infinite lattice. Frequency of appearance, $c_n$ is expeced to be related to cluster size $n$ by the formula
+\begin{equation}
+  c_n = an^{-\tau}
+\end{equation}
+In the logarithmic regime, this relationship is linear, producing the formula 
+\begin{equation}
+  log (c_n) = log(a)-\tau log(n)
+\end{equation}
+
+Thus, the linear relationship between cluster distribution and size was examined by generating a histogram of values that recorded the number of times a cluster of size $n$ appeared on a given configuration. Multiple configurations were generated, and their relative histograms summed on top of one another to produce one large distribution giving a close approximation of the actual.
+\begin{figure}
+\includegraphics[width=3.0in]{clustdist50.pdf}
+\includegraphics[width=3.0in]{clustdist10k-fixed.pdf}
+\caption{An examination of cluster distribution as a function of cluster size for a 50x50 (upper) and 10,000x10,000 (lower) grids. Both axes are logarithmic; full data set is in blue, the part of the data set used to calculate the best fit line is in purple, and the best fit line is in red.}
+\end{figure}
+Initially, the concentration was frozen at 0.59, the suggested value in the lab write up. Since the ideal lattice was infinite, lattices of size 10, 25, 50, 100, 1000, and 10,000 square were tested, and their distributions graphed. In each case, the discrete nature of the histogram (cluster size is necessarily discrete for a finite, discrete grid) as well as the stochastic nature of the method produced noisier values for larger cluster sizes. As a result, only the first part of each data set, the frequencies corresponding to smaller clusters, were used in the linear fit. From these values, a set of estimations of $\tau$ was generated, terminating in a best estimate of 1.957. Since this value was still far off the theoretically expected value of 2.055, the 10,000x10,000 lattice cluster distribution was revisited, instead examining the concentration 0.592. This distribution produced an estimation of $\tau$ that was much closer, 2.049. As a result, it was concluded that the initial choice of concentration has a dramatic effect on the estimated shape of the cluster distribution for a given. 
+
+However, the set of subsequent values for the different lattice sizes allowed for an estimation of the error in the 0.59 concentration case. By subtracting the calculated value of the 1000x1000 lattice from the 10,000x10,000 lattice, the upper bound for this uncertainty was found to be 0.03155. Note that this error does not allow for the inclusion of the theoretically expected value in the 0.59 case. 
+
+\section{Summary and Conclusion}
+Through examination of a large number of random clusters over a finite area, the simulators were able to gain special insight into the behavior of percolation on a square grid. In particular, study of the phase transition contained at the critical concentration allowed for interesting observations to be made into the behavior of this system even in the most exotic regimes. It is worthy to note that this behavior, varied and exotic as it may seem, emerged from a very simple set of rules being applied over a finite area. It is this incredible complexity that can arise from even the simplest of abstract systems that makes problems such as these so fascinating.
+
+
+
+\end{document}
