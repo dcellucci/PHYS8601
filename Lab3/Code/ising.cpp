@@ -80,7 +80,7 @@ int main(){
 	init_genrand64(seed2);
 	
 	//important simulation variables
-	int latticesize = 8;
+	int latticesize = 64;
 	int numsamples  = 500;
 	int nummcsteps  = 5000;
 	double tempstep = 0.125;
@@ -143,7 +143,7 @@ int main(){
 					lattice[i][j] = 1;
 			}
 		}
-		cout << temp << "\n";
+//		cout << temp << "\n";
 		
 		for(int j = 0; j < numsamples; j++){
 				mc_step();
