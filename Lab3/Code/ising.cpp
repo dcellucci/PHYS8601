@@ -15,14 +15,12 @@ dbl_list isingEs;
 
 
 std::vector<int_list> lattice;
-ofstream myfile;
+ofstream c_v_diff,c_v, susc, intE, magf;
 
 void mc_step(){
-	//for(int i = 0; i < 100*lattice.size()*lattice.size(); i++){
-	for(int i = 0; i < lattice.size(); i++){
-		for(int j = 0; j < lattice.size(); j++){
-			int tmpx = i;//(int)(genrand64_real2()*lattice.size());
-			int tmpy = j;//(int)(genrand64_real2()*lattice.size());
+	for(int i = 0; i < 1000*lattice.size()*lattice.size(); i++){
+			int tmpx = (int)(genrand64_real2()*lattice.size());
+			int tmpy = (int)(genrand64_real2()*lattice.size());
 			int sum = 0;
 
 			if(tmpx > 0)
@@ -48,9 +46,7 @@ void mc_step(){
 			if (sum <= 0)
 				lattice[tmpx][tmpy] = -1*lattice[tmpx][tmpy];
 			else if(genrand64_real2() < isingEs[sum/2-1]){
-			//cout << sum << " " << isingEs[sum/2-1] << "\n";
 				lattice[tmpx][tmpy] = -1*lattice[tmpx][tmpy];
-			}
 		}
 	}
 }
@@ -79,56 +75,109 @@ double calcMagnetization(){
 }
 
 int main(){
+	//initialization of the random number generator
 	unsigned long long seed2 = 43534095836234;
 	init_genrand64(seed2);
 	
-	double temperature, prevH = 0;
-	int latticesize = 16;
-	double tempstep = 0.05;
-	double intH,mag,magsq = 0;
-	double tmp = 0;
+	//important simulation variables
+	int latticesize = 8;
+	int numsamples  = 500;
+	int nummcsteps  = 5000;
+	double tempstep = 0.125;
+	
+	//internal temporary terms for each set of monte carlo steps
+	double intH, intHsq, cv, mag, magsq, cvfluc, cvflucsq = 0;
+	//external sum terms that represent sampling around the mean value
+	double intHvar, prevHvar, magvar = 0;
+	//temporary variables
+	double tmp,tmpm,tmpie, tmpmag, tmpcv, prevH, prevHsq = 0;
+	//normalization variable for the lattice size
 	double normalize = 1.0/(latticesize*latticesize);
+	
+	//resizing matrices
 	lattice.resize(latticesize);
-	
 	isingEs.resize(2);
+	for(int i = 0; i < lattice.size(); i++)
+		lattice[i].resize(latticesize);
 	
+	//Preparing the files for IO
 	stringstream stst;
 	stst << latticesize;
-	string s = "c_v.ising";
-	s = s.append(stst.str());
-	myfile.open(s.c_str());
+	string s = "intE.";
+	intE.open((s.append(stst.str())).c_str());
+	s = "mag.";
+	magf.open((s.append(stst.str())).c_str());
+	s = "c_v.";
+	c_v.open((s.append(stst.str())).c_str());
+	s = "susc.";
+	susc.open((s.append(stst.str())).c_str());
+	s = "c_v.diff.";
+	c_v_diff.open((s.append(stst.str())).c_str());
 	
-	for(int i = 0; i < lattice.size(); i++){
-		lattice[i].resize(latticesize);
-		for(int j = 0; j < lattice.size(); j++){
-			if(genrand64_real2()<0.5)
-				lattice[i][j] = -1;
-			else
-				lattice[i][j] = 1;
-		}
-	}
-	
-	tmp = 1.0/10000.0;
-	
-	for(double temp = 1.0; temp < 4.0; temp=temp+0.05){
-		temperature = temp;
-		isingEs[0] = exp(-4.0/temperature);
-		isingEs[1] = exp(-8.0/temperature);
+	//looping over all temperatures of interest
+	for(double temp = 1.0; temp < 4.0; temp=temp+tempstep){
+		//setting up the energy here so that all we have to do is
+		//look up a value. 
+		isingEs[0] = exp(-4.0/temp);
+		isingEs[1] = exp(-8.0/temp);
+		
 		intH = 0;
+		intHsq = 0;
 		mag = 0;
 		magsq = 0;
 		
-
-		for(int i = 0; i < 10000; i++){
-			mc_step();
-			intH = intH + calcIntEnergy()*normalize;
-			//tmp = calcIntEnergy()/temp;
-			//mag = mag + tmp*normalize;
-			//magsq = magsq + tmp*tmp*normalize*normalize;
+		tmp = 1.0/10000.0;
+		
+		//temp variables regarding the calculation of magnetization and
+		//internal energy
+		tmpmag = 0;
+		tmpie = 0;
+		
+		tmpm = 0;
+		
+		for(int i = 0; i < lattice.size(); i++){
+			for(int j = 0; j < lattice.size(); j++){
+				if(genrand64_real2()<0.5)
+					lattice[i][j] = -1;
+				else
+					lattice[i][j] = 1;
+			}
 		}
-		intH = intH+tmp;
-		abs(intH-prevH)/
-		//cout << temperature << " " << tmp/(10000*lattice.size()*lattice.size())<<"\n";
-		myfile << temperature << " " << magsq <<"\n";
+		cout << temp << "\n";
+		
+		for(int j = 0; j < numsamples; j++){
+				mc_step();
+				
+				tmpie = calcIntEnergy()*normalize;
+				tmpmag = calcMagnetization()*normalize;
+				//We want to calculate the internal energy, the magnetization, the susceptibility from fluctuations
+				//the specific heat from fluctuations, and the specific heat from differentiating the internal
+				//energy. 
+				intH = intH + tmpie;
+				intHsq = intHsq + tmpie*tmpie;
+				
+				mag = mag + tmpmag;
+				magsq = magsq + tmpmag*tmpmag;
+				
+		}
+		
+		if(temp == 1.0){
+			prevH = intH;
+			prevHsq = intHsq;
+		}
+		tmp = fabs(intH-prevH)/(1.0*numsamples*tempstep);
+		intHvar  = (intHsq-(intH*intH)/(1.0*numsamples))/(numsamples*numsamples);
+		prevHvar = (prevHsq-(prevH*prevH)/(1.0*numsamples))/(numsamples*numsamples);
+		magvar   = (magsq-(mag*mag)/(1.0*numsamples))/(numsamples*numsamples);
+		
+		prevH    = intH;
+		prevHsq  = intHsq;
+		
+		intE << temp << " " << intH/(1.0*numsamples) << " " << sqrt(intHvar) <<"\n";
+		magf << temp << " " << mag/(1.0*numsamples)  << " " << sqrt(magvar) << "\n";
+		susc << temp << " " << magvar  << "\n";
+		c_v  << temp << " " << intHvar << "\n"; 
+		
+		c_v_diff << temp << " " << tmp << "\n";
 	}
 }
